@@ -29,11 +29,32 @@ class TestKinopoiskAPI:
                 params={"page": 1, "limit": 10, "rating.kp": "7-10"},
             )
 
-        with allure.step("Проверить наличие списка фильмов в поле docs"):
-            assert response.status_code == 200
+        with allure.step("Проверить успешность ответа сервера"):
+            assert response.status_code == 200, (
+                f"Ожидался статус 200, получен: {response.status_code}"
+            )
             data = response.json()
-            assert "docs" in data
-            assert len(data["docs"]) > 0
+            movies = data.get("docs", [])
+            assert len(movies) > 0, "Список фильмов в ответе пуст."
+
+        with allure.step(
+            "Проверить, что рейтинг каждого полученного фильма "
+            "находится в диапазоне от 7 до 10"
+        ):
+            for movie in movies:
+                # Получаем рейтинг Кинопоиска
+                rating = movie.get("rating", {}).get("kp")
+
+                assert rating is not None, (
+                    f"У фильма с id {movie.get('id')} "
+                    "отсутствует рейтинг Кинопоиска."
+                )
+
+                assert 7 <= rating <= 10, (
+                    f"Фильм '{movie.get('name')}' "
+                    f"(id: {movie.get('id')}) имеет рейтинг {rating}, "
+                    "что не входит в диапазон [7, 10]."
+                )
 
     @allure.story("Тест 3: Получение фильма по ID")
     def test_get_movie_by_id(self) -> None:
@@ -49,7 +70,9 @@ class TestKinopoiskAPI:
                 or data.get("kinopoiskId") == movie_id
             )
 
-    @allure.story("Тест 4: Негативный тест — запрос несуществующего ID")
+    @allure.story(
+        "Тест 4: Негативный тест — запрос несуществующего ID"
+    )
     def test_get_non_existent_movie_negative(self) -> None:
         invalid_id = 14999999
         with allure.step(f"Запросить несуществующий ID {invalid_id}"):
@@ -64,7 +87,9 @@ class TestKinopoiskAPI:
             "Отправить запрос без заголовка "
             "авторизации (use_auth=False)"
         ):
-            response = api.get("/v1.4/movie/random", use_auth=False)
+            response = api.get(
+                "/v1.4/movie/random", use_auth=False
+            )
 
         with allure.step("Проверить статус 401 Unauthorized"):
             assert response.status_code == 401

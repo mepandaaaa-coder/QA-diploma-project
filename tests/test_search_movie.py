@@ -7,18 +7,26 @@ from pages.main_page import MainPage
 @allure.feature("Поиск")
 @allure.story("Поиск фильма по названию")
 def test_search_movie(driver: WebDriver) -> None:
-    """Тест проверки поиска фильма по ключевому слову."""
+    """
+    Тест проверки поиска фильма по ключевому слову с проверкой результатов.
+    """
     main_page = MainPage(driver)
 
     with allure.step("Открыть главную страницу Кинопоиска"):
         main_page.open()
 
-    with allure.step("Ввести название фильма в поиск и нажать Enter"):
+    with allure.step("Ввести название фильма в строку поиска"):
         query: str = "Побег из Шоушенка"
-        main_page.search_movie(query)
+        main_page.input_search_query(query)
 
-    with allure.step("Проверить, что заголовок или URL содержит запрос"):
-        assert (
-            query.lower() in driver.page_source.lower()
-            or "search" in driver.current_url
+    with allure.step("Нажать клавишу Enter"):
+        main_page.press_enter_in_search()
+
+    with allure.step(
+        "Проверить, что в результатах поиска отображается искомый фильм"
+    ):
+        result_title = main_page.get_first_search_result_text()
+        assert query.lower() in result_title.lower(), (
+            f"Ожидалось, что результат содержит '{query}', "
+            f"но получено: '{result_title}'"
         )

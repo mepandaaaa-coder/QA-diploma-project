@@ -1,5 +1,6 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.support.ui import WebDriverWait
 from pages.base_page import BasePage
 
 
@@ -10,6 +11,12 @@ class Top250Page(BasePage):
         By.CSS_SELECTOR,
         'div[data-test-id="movie-list-item"]:first-child '
         'a[class*="styles_poster"]'
+    )
+
+    FIRST_MOVIE_TITLE: tuple[str, str] = (
+        By.CSS_SELECTOR,
+        'div[data-test-id="movie-list-item"]:first-child '
+        'a[href*="/film/"]'
     )
 
     MOVIE_TITLE_HEADER: tuple[str, str] = (
@@ -67,6 +74,41 @@ class Top250Page(BasePage):
         self.click_element(self.FOREIGN_FILTER_BUTTON)
 
     def get_movie_counter_text(self) -> str:
-        """Получение текста счетчика фильмов."""
+        """Получение текста счётчика фильмов на странице."""
         element = self.find_element(self.MOVIE_COUNTER)
-        return element.text
+        return (
+            element.text
+            or element.get_attribute("textContent")
+            or element.get_attribute("innerText")
+            or ""
+        )
+
+    def wait_for_counter_update(self, initial_value: str) -> str:
+        """Ожидание обновления счётчика (защита от race condition)."""
+        def _check_counter(driver):
+            try:
+                elem = self.find_element(self.MOVIE_COUNTER)
+                text = (
+                    elem.text
+                    or elem.get_attribute("textContent")
+                    or elem.get_attribute("innerText")
+                    or ""
+                )
+                text = text.strip()
+                if text and text != initial_value:
+                    return text
+            except Exception:
+                pass
+            return False
+
+        return WebDriverWait(self.driver, 10).until(_check_counter)
+
+    def get_first_movie_title(self) -> str:
+        """Получение названия первого фильма в списке до клика."""
+        element = self.find_element(self.FIRST_MOVIE_TITLE)
+        return (
+            element.text
+            or element.get_attribute("textContent")
+            or element.get_attribute("innerText")
+            or ""
+        )
