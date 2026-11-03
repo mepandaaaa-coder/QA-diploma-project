@@ -16,7 +16,7 @@ class Top250Page(BasePage):
     FIRST_MOVIE_TITLE: tuple[str, str] = (
         By.CSS_SELECTOR,
         'div[data-test-id="movie-list-item"]:first-child '
-        'a[href*="/film/"]'
+        'span[class*="styles_mainTitle"]'
     )
 
     MOVIE_TITLE_HEADER: tuple[str, str] = (

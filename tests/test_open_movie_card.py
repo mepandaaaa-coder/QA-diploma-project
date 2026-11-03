@@ -22,6 +22,9 @@ def test_open_movie_card(driver: WebDriver) -> None:
 
     with allure.step("Получить название первого фильма в списке до клика"):
         expected_title = top250_page.get_first_movie_title()
+        assert len(expected_title) > 0, (
+            "Название первого фильма в списке оказалось пустым."
+        )
 
     with allure.step("Кликнуть на постер первого фильма в списке"):
         top250_page.click_first_movie()
@@ -31,8 +34,8 @@ def test_open_movie_card(driver: WebDriver) -> None:
         assert "/film/" in driver.current_url
 
     with allure.step(
-        "Проверить, что название открытого"
-        "фильма совпадает с названием в списке"
+        "Проверить, что название открытого фильма"
+        " совпадает с названием в списке"
     ):
         movie_title: str = top250_page.get_opened_movie_title()
         assert len(movie_title) > 0, "Название фильма в карточке пустое."
